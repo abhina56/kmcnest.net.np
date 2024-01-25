@@ -1,0 +1,21 @@
+header .header-content {
+    background-image: url('https://kathmandu.gov.np/wp-content/themes/kmc-theme/images/header-new.png');
+    background-size: cover;
+    background-position: center;
+    height: 200px; /* Adjust as needed */
+    color: white;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+h1 {
+    margin: 0;
+    font-size: 3em;
+}
+
+p {
+    margin: 10px 0 0;
+    font-size: 1.5em;
+}

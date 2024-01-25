@@ -1,0 +1,240 @@
+<?php
+include '../config.php';
+
+// Retrieve patient ID from the URL
+$p_id = $_GET['p_id'] ?? 0;
+
+// Retrieve patient data from the database
+$sql_select_patient = "SELECT * FROM patient WHERE p_id = $p_id";
+$result_patient = $conn->query($sql_select_patient);
+
+// Check if patient exists
+if ($result_patient->num_rows > 0) {
+    $row_patient = $result_patient->fetch_assoc();
+
+    // Retrieve hospital name for the current patient
+    $hospital_id = $row_patient["hospital_id"];
+    $sql_select_hospital = "SELECT hospital_name FROM hospital WHERE hospital_id = $hospital_id";
+    $result_hospital = $conn->query($sql_select_hospital);
+    $hospital_name = ($result_hospital->num_rows > 0) ? $result_hospital->fetch_assoc()["hospital_name"] : '';
+} else {
+    echo "Patient not found.";
+    exit();
+}
+
+// Close the database connection
+$conn->close();
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Patient</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 20px;
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        a {
+            text-decoration: none;
+            color: #007bff;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            max-width: 800px;
+            margin-top: 20px;
+        }
+
+        .btn-action {
+            margin-right: 10px;
+        }
+    </style>
+
+</head>
+<body>
+
+<h2>View Patient</h2>
+
+<table>
+    <tr>
+        <th>Patient ID</th>
+        <td><?php echo $row_patient["p_id"]; ?></td>
+    </tr>
+    <tr>
+        <th>Name</th>
+        <td><?php echo $row_patient["name"]; ?></td>
+    </tr>
+    <tr>
+        <th>Address</th>
+        <td><?php echo $row_patient["address"]; ?></td>
+    </tr>
+    <tr>
+        <th>Phone</th>
+        <td><?php echo $row_patient["phone"]; ?></td>
+    </tr>
+    <tr>
+        <th>Patient Type</th>
+        <td><?php echo $row_patient["p_type"]; ?></td>
+    </tr>
+    <tr>
+        <th>Emergency Contact</th>
+        <td><?php echo $row_patient["emergency_contact"]; ?></td>
+    </tr>
+    <tr>
+        <th>Referred From</th>
+        <td><?php echo $row_patient["referred_from"]; ?></td>
+    </tr>
+    <tr>
+    <th>Document</th>
+    <td><img src="<?php echo $row_patient["document_path"]; ?>" alt="Patient Document"></td>
+    </tr>
+
+    <tr>
+        <th>Hospital ID</th>
+        <td><?php echo $row_patient["hospital_id"]; ?></td>
+    </tr>
+    <tr>
+        <th>Bed Number</th>
+        <td><?php echo $row_patient["bed_no"]; ?></td>
+    </tr>
+    <tr>
+        <th>Admission Date</th>
+        <td><?php echo $row_patient["admission_date"]; ?></td>
+    </tr>
+    <tr>
+        <th>Discharge/Transfer Date</th>
+        <td><?php echo $row_patient["discharge_transfer_date"]; ?></td>
+    </tr>
+    <tr>
+        <th>Total Bill</th>
+        <td><?php echo $row_patient["total"]; ?></td>
+    </tr>
+
+    <tr>
+    <th>Bill </th>
+    <td><img src="<?php echo $row_patient["bill_dir"]; ?>" alt="Patient Bill"></td>
+    </tr>
+    <tr>
+        <th>Status</th>
+        <td><?php echo $row_patient["status"]; ?></td>
+    </tr>
+    <tr>
+        <th>Hospital Name</th>
+        <td><?php echo $hospital_name; ?></td>
+    </tr>
+</table>
+
+<div class="modal" id="referModal">
+<div class="modal-dialog">
+        <div class="modal-content">
+
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <h4 class="modal-title">Refer to Hospital</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="modal-body">
+                <form action="refer_patient.php" method="post">
+                    <div class="form-group">
+                        <label for="hospitalName">Select Hospital:</label>
+                        <select class="form-control" id="hospitalName" name="hospitalName">
+                            <!-- Populate options with hospital names from the database -->
+                            <?php
+                            include '../config.php'; // Make sure the path is correct
+                            $sql_select_hospitals = "SELECT hospital_id, hospital_name FROM hospital";
+                            $result_hospitals = $conn->query($sql_select_hospitals);
+                            if ($result_hospitals) {
+                                while ($row_hospital = $result_hospitals->fetch_assoc()) {
+                                    echo "<option value='{$row_hospital["hospital_id"]}'>{$row_hospital["hospital_name"]}</option>";
+                                }
+                            }
+                            $conn->close();
+                            ?>
+                        </select>
+                    </div>
+                    <input type="hidden" name="patientId" value="<?php echo $p_id; ?>"> <!-- Assuming $p_id is the patient's ID -->
+                    <button type="submit" class="btn btn-primary">Refer</button>
+                </form>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+<button class="btn btn-primary btn-action" data-toggle="modal" data-target="#referModal">Refer to Hospital</button>
+
+<form action="update_bill.php" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="patientId" value="<?php echo $row_patient["p_id"]; ?>">
+
+    <div class="form-group">
+            <label for="totalCost">Total Bill:</label>
+            <input type="number" class="form-control" id="totalCost" name="totalCost" required>
+        </div>
+
+        <div class="form-group">
+            <label for="paidCost">Paid Amount:</label>
+            <input type="number" class="form-control" id="paidCost" name="paidCost" required>
+        </div>
+
+    <div class="form-group">
+        <label for="billFile">Upload Bill:</label>
+        <input type="file" class="form-control" id="billFile" name="billFile" accept=".pdf,.jpg,.jpeg,.png">
+    </div>
+
+    <button type="submit" class="btn btn-primary">Update Bill</button>
+</form>
+
+<div>
+        <!-- Button to set status as inactive -->
+        <a class="btn btn-danger btn-action" href="set_status.php?p_id=<?php echo $row_patient["p_id"]; ?>&status=inactive">Discharge</a>
+<!-- Button to set status as Dead -->
+<a class="btn btn-danger btn-action" href="set_status.php?p_id=<?php echo $row_patient["p_id"]; ?>&status=Dead">Dead</a>
+
+         </div>
+
+<br>
+
+
+
+<a href="index.php">Back</a>
+<!-- Bootstrap JS and dependencies -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+</body>
+</html>
